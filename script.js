@@ -1,45 +1,46 @@
 
-function getBorrowedCount(itemName) {
-  return (transactions || []).filter(tran =>
-    tran.item === itemName && tran.status === "Borrowed"
-  ).reduce((sum, tran) => sum + Number(tran.quantity || 0), 0);
-}
+const officeResources = JSON.parse(localStorage.getItem('officeResources') || '[]');
 
-const items = JSON.parse(localStorage.getItem('inventory')) || [];
-const officeResources = JSON.parse(localStorage.getItem('officeResources')) || [];
-const transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+function displayOfficeResources() {
+    const container = document.getElementById('office-container');
+    container.innerHTML = '';
 
-function displayItems() {
-    const stockroomContainer = document.getElementById('items-container');
-    const officeContainer = document.getElementById('office-container');
-    stockroomContainer.innerHTML = '';
-    officeContainer.innerHTML = '';
-
-    items.forEach(item => {
-        const div = document.createElement('div');
-        div.classList.add('item');
-        div.innerHTML = `
-            ${item.image ? `<img src="${item.image}" class="item-image" alt="Item Image"/>` : ""}
-            <h3>${item.name}</h3>
-            <p><strong>Available:</strong> ${item.available || item.quantity || 0}</p>
-            <p class="borrowed"><strong>Borrowed:</strong> ${getBorrowedCount(item.name)}</p>
-        `;
-        stockroomContainer.appendChild(div);
-    });
+    if (officeResources.length === 0) {
+        container.innerHTML = "<p>No office resources listed.</p>";
+        return;
+    }
 
     officeResources.forEach(resource => {
         const div = document.createElement('div');
-        div.classList.add('item');
+        div.className = 'item';
         div.innerHTML = `
             <h3>${resource.name}</h3>
-            <p><strong>Quantity:</strong> ${resource.quantity}</p>
+            <p class="available"><strong>Quantity:</strong> ${resource.quantity}</p>
         `;
-        officeContainer.appendChild(div);
+        container.appendChild(div);
     });
 }
 
-function getInitials(name) {
-  return name.split(" ").map(n => n[0]).join(". ") + ".";
+
+const items = JSON.parse(localStorage.getItem('inventory') || '[]');
+const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+
+function displayItems() {
+    console.log("Items loaded:", items);
+    console.log("Office resources loaded:", officeResources);
+    const container = document.getElementById('items-container');
+    container.innerHTML = '';
+
+    items.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.classList.add('item');
+        itemDiv.innerHTML = `
+            <h3>${item.name}</h3>
+            <p class="available"><strong>Available:</strong> ${item.available}</p>
+            <p class="borrowed"><strong>Borrowed:</strong> ${item.borrowed}</p>
+        `;
+        container.appendChild(itemDiv);
+    });
 }
 
 function displayTransactions() {
@@ -47,15 +48,21 @@ function displayTransactions() {
     container.innerHTML = '';
 
     if (transactions.length === 0) {
-        container.innerHTML = "<p style='text-align:center;'>No borrow history available.</p>";
+        container.innerHTML = "<p>No borrow history available.</p>";
         return;
     }
+
+    const header = document.createElement('h2');
+    header.textContent = "Borrow History";
+    header.style.textAlign = "center";
+    header.style.color = "#FF4136";
+    container.appendChild(header);
 
     transactions.forEach(tran => {
         const div = document.createElement('div');
         div.className = 'item';
         div.innerHTML = `
-            <p><strong>${getInitials(tran.name)}</strong> borrowed <strong>${tran.quantity}</strong> of <strong>${tran.item}</strong></p>
+            <p><strong>${tran.name}</strong> borrowed <strong>${tran.quantity}</strong> of <strong>${tran.item}</strong></p>
             <p>Status: <span class="${tran.status === 'Returned' ? 'available' : 'borrowed'}">${tran.status}</span></p>
             <p>Date Borrowed: ${tran.dateBorrowed || 'N/A'}</p>
             <p>Date Returned: ${tran.dateReturned || 'N/A'}</p>
@@ -65,6 +72,7 @@ function displayTransactions() {
 }
 
 window.onload = function () {
+    displayOfficeResources();
     displayItems();
     displayTransactions();
 };
